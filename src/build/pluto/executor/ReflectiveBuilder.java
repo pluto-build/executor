@@ -15,7 +15,6 @@ import java.util.Set;
 
 import build.pluto.builder.Builder;
 import build.pluto.builder.BuilderFactory;
-import build.pluto.builder.BuilderFactoryFactory;
 import build.pluto.dependency.Origin;
 import build.pluto.output.Output;
 
@@ -81,15 +80,15 @@ public class ReflectiveBuilder<In extends Serializable, Out extends Output>
 
 	
 	@SuppressWarnings("unchecked")
-	private BuilderFactory<In, Out, Builder<In, Out>> loadBuilderFactory(Input input) throws ClassNotFoundException {
+	private ExecutableBuilderFactory<In, Out, Builder<In, Out>> loadBuilderFactory(Input input) throws ClassNotFoundException {
 		
 		Class<Builder<In, Out>> builderClass = (Class<Builder<In, Out>>) loader.loadClass(input.builderClass);
 		
 		// check for field 'factory' in builderClass 
 		try {
 			Field factoryField = builderClass.getField("factory");
-			if (factoryField != null && BuilderFactory.class.isAssignableFrom(factoryField.getType()))
-				return (BuilderFactory<In, Out, Builder<In, Out>>) factoryField.get(null);
+			if (factoryField != null && ExecutableBuilderFactory.class.isAssignableFrom(factoryField.getType()))
+				return (ExecutableBuilderFactory<In, Out, Builder<In, Out>>) factoryField.get(null);
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
 			// ignore
 		}
@@ -98,18 +97,11 @@ public class ReflectiveBuilder<In extends Serializable, Out extends Output>
 		try {
 			Method factoryMethod = builderClass.getMethod("factory");
 			if (factoryMethod != null)
-				return (BuilderFactory<In, Out, Builder<In, Out>>) factoryMethod.invoke(null);
+				return (ExecutableBuilderFactory<In, Out, Builder<In, Out>>) factoryMethod.invoke(null);
 		} catch (SecurityException | IllegalArgumentException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
 			// ignore
 		}
 
-		// try to use the BuilderFactoryFactory
-		try {
-			return BuilderFactoryFactory.of(builderClass, (Class<In>) input.builderInput.getClass());
-		} catch (IllegalArgumentException e) {
-			// ignore
-		}
-		
 		throw new IllegalArgumentException("Could not load factory for builder " + input.builderClass);
 	}
 	
@@ -128,7 +120,10 @@ public class ReflectiveBuilder<In extends Serializable, Out extends Output>
 		requireBuild(input.classOrigin);
 		setupClassLoader(input.classPath);
 		
-		BuilderFactory<In, Out, Builder<In,Out>> factory = loadBuilderFactory(input);
-		return requireBuild(factory, input.builderInput);
+		ExecutableBuilderFactory<In, Out, Builder<In,Out>> factory = loadBuilderFactory(input);
+		InputParser<In> parser = factory.inputParser();
+		In in = parser.parseInput(input.builderInput);
+		
+		return requireBuild(factory, in);
 	}
 }
