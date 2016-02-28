@@ -52,11 +52,11 @@ public class ReflectiveBuilder<In extends Serializable, Out extends Output>
 		private static final long serialVersionUID = 6368484213073178045L;
 		
 		public final String builderClass;
-		public final String builderInput;
+		public final Object builderInput;
 		public final Origin classOrigin;
 		public final List<File> classPath;
 		
-		public Input(String builderClass, String builderInput, Origin classOrigin, List<File> classPath) {
+		public Input(String builderClass, Object builderInput, Origin classOrigin, List<File> classPath) {
 			this.builderClass = builderClass;
 			this.builderInput = builderInput;
 			this.classOrigin = classOrigin;
@@ -122,8 +122,8 @@ public class ReflectiveBuilder<In extends Serializable, Out extends Output>
 		
 		ExecutableBuilderFactory<In, Out, Builder<In,Out>> factory = loadBuilderFactory(input);
 		InputParser<In> parser = factory.inputParser();
-		In in = parser.parseInput(input.builderInput);
 		
+		In in = parser.parseInput(input.builderInput);
 		return requireBuild(factory, in);
 	}
 }
