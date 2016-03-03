@@ -2,6 +2,7 @@ package build.pluto.executor;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,11 +18,11 @@ import build.pluto.builder.BuilderFactory;
 import build.pluto.builder.BuilderFactoryFactory;
 import build.pluto.buildjava.JavaBulkCompiler;
 import build.pluto.buildjava.JavaCompilerInput;
-import build.pluto.dependency.Origin;
 import build.pluto.executor.config.Config;
 import build.pluto.executor.config.Target;
 import build.pluto.output.None;
 import build.pluto.output.Out;
+import build.pluto.output.Output;
 
 public class Executor extends Builder<Executor.Input, None> {
 
@@ -77,8 +78,6 @@ public class Executor extends Builder<Executor.Input, None> {
 				}
 			}
 		
-		Origin.Builder origin = Origin.Builder();
-		
 		List<File> dependencies = new ArrayList<>();
 		// TODO feed in dependencies form config
 		// origin.add(dependency build);
@@ -90,20 +89,30 @@ public class Executor extends Builder<Executor.Input, None> {
 					.setTargetDir(config.getBuilderTarget())
 					.addClassPaths(dependencies)
 					.get();
-			origin.add(JavaBulkCompiler.factory, javaInput);
+			requireBuild(JavaBulkCompiler.factory, javaInput);
 		}
 		
 		
 		dependencies.add(config.getBuilderTarget());
-		ReflectiveBuilder.Input reflInput = new ReflectiveBuilder.Input(
-				target.getBuilder(),
-				target.getInput(),
-				origin.get(),
-				dependencies);
-		requireBuild(ReflectiveBuilder.<Serializable, Out<String>>factory(), reflInput);
+		ReflectiveBuilding reflective = new ReflectiveBuilding();
+		Out<String> out = reflective.build(this, target.getBuilder(), target.getInput(), dependencies);
+		System.out.println(out.val());
 		
 		return null;
 	}
+
+	@Override
+    protected 
+  //@formatter:off
+    <In_ extends Serializable, 
+     Out_ extends Output, 
+     B_ extends Builder<In_, Out_>, 
+     F_ extends BuilderFactory<In_, Out_, B_>, 
+     SubIn_ extends In_>
+  //@formatter:on
+    Out_ requireBuild(F_ factory, SubIn_ input) throws IOException {
+      return super.requireBuild(factory, input);
+    }
 
 	
 	public static void main(String[] args) throws Throwable {
