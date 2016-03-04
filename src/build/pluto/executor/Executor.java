@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +14,7 @@ import org.yaml.snakeyaml.constructor.Constructor;
 
 import com.cedarsoftware.util.DeepEquals;
 
+import build.pluto.builder.BuildManager;
 import build.pluto.builder.Builder;
 import build.pluto.builder.BuilderFactory;
 import build.pluto.builder.BuilderFactoryFactory;
@@ -77,10 +79,7 @@ public class Executor extends Builder<Executor.Input, Output> {
 		
 		
 		List<File> dependencies = new ArrayList<>();
-		dependencies.add(new File("/Users/seba/.m2/repository/org/sugarj/common/1.7.0-SNAPSHOT/common-1.7.0-SNAPSHOT.jar"));
-		dependencies.add(new File("/Users/seba/.m2/repository/build/pluto/pluto/1.8.0-SNAPSHOT/pluto-1.8.0-SNAPSHOT.jar"));
-		dependencies.add(new File("/Users/seba/.m2/repository/com/cedarsoftware/java-util-pluto-fixes/1.19.4-SNAPSHOT/java-util-pluto-fixes-1.19.4-SNAPSHOT.jar"));
-		dependencies.add(new File("/Users/seba/projects/build/executor/target/classes"));
+		addPlutoDependencies(dependencies);
 		// TODO feed in dependencies form config
 
 		if (config.getBuilderSource() != null) {
@@ -105,6 +104,24 @@ public class Executor extends Builder<Executor.Input, Output> {
 		Out<String> out = reflective.build(this, target.getName(), workingDir, dependencies, target.getBuilder(), SimpleYamlObject.of(target.getInput()));
 		
 		return out;
+	}
+
+	private void addPlutoDependencies(List<File> dependencies) {
+		Path commonPath = FileCommands.getRessourceContainer(FileCommands.class);
+		if (commonPath != null)
+			dependencies.add(commonPath.toFile());
+
+		Path javautilPath = FileCommands.getRessourceContainer(DeepEquals.class);
+		if (javautilPath != null)
+			dependencies.add(javautilPath.toFile());
+		
+		Path plutoPath = FileCommands.getRessourceContainer(BuildManager.class);
+		if (plutoPath != null)
+			dependencies.add(plutoPath.toFile());
+		
+		Path executorPath = FileCommands.getRessourceContainer(Executor.class);
+		if (executorPath != null)
+			dependencies.add(executorPath.toFile());
 	}
 
 	@Override
