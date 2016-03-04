@@ -2,3 +2,4 @@ target/
 META-INF
 
 testdata/*/*
+!testdata/*/builder
