@@ -1,8 +1,10 @@
 package build.pluto.executor;
 
+import java.io.File;
 import java.io.Serializable;
 
-public interface InputParser<In extends Serializable> {
-	
-	public In parseInput(Object input) throws Throwable;
+import build.pluto.executor.config.yaml.YamlObject;
+
+public interface InputParser<In extends Serializable> extends Serializable {
+	public In parse(YamlObject input, String target, File workingDir) throws Throwable;
 }

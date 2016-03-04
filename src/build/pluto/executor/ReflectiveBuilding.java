@@ -14,7 +14,9 @@ import java.util.List;
 import java.util.Set;
 
 import build.pluto.builder.Builder;
+import build.pluto.builder.BuilderFactory;
 import build.pluto.dependency.Origin;
+import build.pluto.executor.config.yaml.YamlObject;
 import build.pluto.output.Output;
 
 public class ReflectiveBuilding {
@@ -49,9 +51,14 @@ public class ReflectiveBuilding {
 		// check for field 'factory' in builderClass 
 		try {
 			Field factoryField = builderClass.getField("factory");
-			if (factoryField != null && ExecutableBuilderFactory.class.isAssignableFrom(factoryField.getType()))
-				return (ExecutableBuilderFactory<In, Out, Builder<In, Out>>) factoryField.get(null);
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			if (factoryField != null) {
+				Object val = factoryField.get(null);
+				if (ExecutableBuilderFactory.class.isAssignableFrom(val.getClass()))
+					return (ExecutableBuilderFactory<In, Out, Builder<In, Out>>) val;
+				else if (BuilderFactory.class.isAssignableFrom(val.getClass())) 
+					throw new IllegalArgumentException("Required a builder factory of type ExecutableBuilderFactory that supports input parsing.");
+			}
+		} catch (NoSuchFieldException | SecurityException | IllegalAccessException e) {
 			// ignore
 		}
 
@@ -78,14 +85,14 @@ public class ReflectiveBuilding {
 	}
 
 	public <In extends Serializable, Out extends Output> Out 
-			build(Executor executor, String builderClass, Object builderInput, List<File> classPath) 
+			build(Executor executor, String target, File workingDir, List<File> classPath, String builderClass, YamlObject builderInput) 
 			throws Throwable {
 		
 		setupClassLoader(classPath);
 		ExecutableBuilderFactory<In, Out, Builder<In, Out>> factory = loadBuilderFactory(builderClass);
 		InputParser<In> parser = factory.inputParser();
 		
-		In in = parser.parseInput(builderInput);
+		In in = parser.parse(builderInput, target, workingDir);
 		return executor.requireBuild(factory, in);
 	}
 }

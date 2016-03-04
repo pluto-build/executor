@@ -60,7 +60,6 @@ public abstract class ScopedBuildTest {
           private Path currentDir = testBasePath;
           @Override
           public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-            System.out.println("COPY " + dir + " to " + currentDir);
     	    currentDir = Files.copy(dir, currentDir.resolve(dir.toFile().getName()));
             return FileVisitResult.CONTINUE;
           }
@@ -73,7 +72,6 @@ public abstract class ScopedBuildTest {
           
           @Override
           public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            System.out.println("COPY " + file + " to " + currentDir);
             Files.copy(file, currentDir.resolve(file.toFile().getName()));
             return FileVisitResult.CONTINUE;
           }

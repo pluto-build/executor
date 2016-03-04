@@ -5,11 +5,15 @@ builderTarget: buildtarget
 
 targets:
   - name: print
-    builder: simple1.Builder
+    builder: simple1.Simple1
     input:
-      - output: Please print this text.
+      output: Please print this text.
 
   - name: read  
-    builder: build.pluto.buildmaven.MavenDeployer
+    builder: simple1.Simple1
     input:
-      - prompt: What do you want me to print?
+      file: read.txt
+
+dependencies:
+  - kind: file
+    input: /Users/seba/.m2/repository/org/sugarj/common/1.7.0-SNAPSHOT/common-1.7.0-SNAPSHOT.jar

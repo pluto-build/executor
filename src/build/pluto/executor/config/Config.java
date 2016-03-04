@@ -12,8 +12,7 @@ public class Config {
 	private File builderTarget;
 	private List<Dependency> dependencies;
 	
-	public void makePathsAbsolute(File configFile) {
-		File parent = configFile.getParentFile();
+	public void makePathsAbsolute(File parent) {
 		if (builderTarget != null && !builderTarget.isAbsolute())
 			builderTarget = new File(parent, builderTarget.getPath());
 		if (builderSource != null) {
