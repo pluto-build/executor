@@ -1,5 +1,5 @@
 target/
 META-INF
 
-testdata/*/*
+testdata/*/*/
 !testdata/*/builder
