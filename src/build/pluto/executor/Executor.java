@@ -30,6 +30,13 @@ public class Executor extends Builder<Executor.Input, Output> {
 
 	public static final String PLUTO_HOME = System.getenv("PLUTO_HOME") != null ? System.getenv("PLUTO_HOME") : System.getProperty("user.home") + "/.pluto";
 	
+	public static final Class<?>[] DEPENDENCIES = {
+		FileCommands.class, // org.sugarj:common
+		DeepEquals.class, // com.cedarsoftware:java-util
+		BuildManager.class, // build.pluto:pluto
+		Executor.class // build.pluto:executor
+	};
+	
 	public static String javaVersion() {
 		String version = System.getProperty("java.version");
 		int i = version.indexOf('.', version.indexOf('.')+1); // find second '.'
@@ -79,7 +86,11 @@ public class Executor extends Builder<Executor.Input, Output> {
 		
 		
 		List<File> dependencies = new ArrayList<>();
-		addPlutoDependencies(dependencies);
+		for (Class<?> cl : DEPENDENCIES) {
+			Path path = FileCommands.getRessourceContainer(cl);
+			if (path != null)
+				dependencies.add(path.toFile());
+		}
 		// TODO feed in dependencies form config
 
 		if (config.getBuilderSource() != null) {
@@ -104,24 +115,6 @@ public class Executor extends Builder<Executor.Input, Output> {
 		Out<String> out = reflective.build(this, target.getName(), workingDir, dependencies, target.getBuilder(), SimpleYamlObject.of(target.getInput()));
 		
 		return out;
-	}
-
-	private void addPlutoDependencies(List<File> dependencies) {
-		Path commonPath = FileCommands.getRessourceContainer(FileCommands.class);
-		if (commonPath != null)
-			dependencies.add(commonPath.toFile());
-
-		Path javautilPath = FileCommands.getRessourceContainer(DeepEquals.class);
-		if (javautilPath != null)
-			dependencies.add(javautilPath.toFile());
-		
-		Path plutoPath = FileCommands.getRessourceContainer(BuildManager.class);
-		if (plutoPath != null)
-			dependencies.add(plutoPath.toFile());
-		
-		Path executorPath = FileCommands.getRessourceContainer(Executor.class);
-		if (executorPath != null)
-			dependencies.add(executorPath.toFile());
 	}
 
 	@Override
