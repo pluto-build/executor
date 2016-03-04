@@ -1,0 +1,15 @@
+builderSource:
+  - builder
+
+builderTarget: buildtarget
+
+targets:
+  - name: print
+    builder: simple1.Builder
+    input:
+      - output: Please print this text.
+
+  - name: read  
+    builder: build.pluto.buildmaven.MavenDeployer
+    input:
+      - prompt: What do you want me to print?

@@ -12,6 +12,21 @@ public class Config {
 	private File builderTarget;
 	private List<Dependency> dependencies;
 	
+	public void makePathsAbsolute(File configFile) {
+		File parent = configFile.getParentFile();
+		if (builderTarget != null && !builderTarget.isAbsolute())
+			builderTarget = new File(parent, builderTarget.getPath());
+		if (builderSource != null) {
+			List<File> newSource = new ArrayList<>(builderSource.size());
+			for (File src : builderSource)
+				if (!src.isAbsolute())
+					newSource.add(new File(parent, src.getPath()));
+				else
+					newSource.add(src);
+			builderSource = newSource;
+		}
+	}
+	
 	public void setTargets(List<Target> targets) {
 		this.targets = new HashMap<>();
 		for (Target t : targets)

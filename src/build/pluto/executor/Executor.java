@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.sugarj.common.FileCommands;
 import org.sugarj.common.StringCommands;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -20,15 +21,14 @@ import build.pluto.buildjava.JavaBulkCompiler;
 import build.pluto.buildjava.JavaCompilerInput;
 import build.pluto.executor.config.Config;
 import build.pluto.executor.config.Target;
-import build.pluto.output.None;
 import build.pluto.output.Out;
 import build.pluto.output.Output;
 
-public class Executor extends Builder<Executor.Input, None> {
+public class Executor extends Builder<Executor.Input, Output> {
 
 	public static final String PLUTO_HOME = System.getenv("PLUTO_HOME") != null ? System.getenv("PLUTO_HOME") : System.getProperty("user.home") + "/.pluto";
 	
-	public static BuilderFactory<Input, None, Executor> factory = BuilderFactoryFactory.of(Executor.class, Input.class);
+	public static BuilderFactory<Input, Output, Executor> factory = BuilderFactoryFactory.of(Executor.class, Input.class);
 	
 	public static class Input implements Serializable {
 		private static final long serialVersionUID = -6190709839488536335L;
@@ -59,46 +59,40 @@ public class Executor extends Builder<Executor.Input, None> {
 	}
 
 	@Override
-	protected None build(Input input) throws Throwable {
+	protected Output build(Input input) throws Throwable {
 		require(input.plutoConfig);
 		Yaml yaml = new Yaml(new Constructor(Config.class));
 		Config config = (Config) yaml.load(new FileInputStream(input.plutoConfig));
+		config.makePathsAbsolute(input.plutoConfig);
 		Target target = config.getTarget(input.buildTarget);
 		
 		// TODO use extraInput to override config
 		
-		String sourceFilePath = target.getBuilder().replace('.', '/') + ".java";
-		File sourceFile = null;
-		if (config.getBuilderSource() != null)
-			for (File dir : config.getBuilderSource()) {
-				File f = new File(dir, sourceFilePath);
-				if (f.exists()) {
-					sourceFile = f;
-					break;
-				}
-			}
 		
 		List<File> dependencies = new ArrayList<>();
 		// TODO feed in dependencies form config
-		// origin.add(dependency build);
 
-		if (sourceFile != null) {
+		if (config.getBuilderSource() != null) {
+			List<File> sourceFiles = new ArrayList<>();
+			for (File sourceDir : config.getBuilderSource())
+				sourceFiles.addAll(FileCommands.listFilesRecursive(sourceDir));
+			
 			JavaCompilerInput javaInput = 
 					JavaCompilerInput.Builder()
 					.addSourcePaths(config.getBuilderSource())
 					.setTargetDir(config.getBuilderTarget())
 					.addClassPaths(dependencies)
+					.addInputFiles(sourceFiles)
 					.get();
 			requireBuild(JavaBulkCompiler.factory, javaInput);
 		}
-		
 		
 		dependencies.add(config.getBuilderTarget());
 		ReflectiveBuilding reflective = new ReflectiveBuilding();
 		Out<String> out = reflective.build(this, target.getBuilder(), target.getInput(), dependencies);
 		System.out.println(out.val());
 		
-		return null;
+		return out;
 	}
 
 	@Override
@@ -113,14 +107,4 @@ public class Executor extends Builder<Executor.Input, None> {
     Out_ requireBuild(F_ factory, SubIn_ input) throws IOException {
       return super.requireBuild(factory, input);
     }
-
-	
-	public static void main(String[] args) throws Throwable {
-		File plutoConfig = new File("/Users/seba/projects/build/bootstrapp/test/maven/pluto.yml");
-		String target = args[0];
-		String extraInput = StringCommands.printListSeparated(args, " ").substring(target.length());
-		BuildManagers.clean(false, new BuildRequest<>(factory, new Executor.Input(plutoConfig, target, extraInput)));
-		
-		BuildManagers.build(new BuildRequest<>(factory, new Executor.Input(plutoConfig, target, extraInput)));
-	}
 }
