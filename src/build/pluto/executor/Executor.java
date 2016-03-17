@@ -24,6 +24,7 @@ import build.pluto.executor.config.Dependency;
 import build.pluto.executor.config.Target;
 import build.pluto.executor.config.yaml.SimpleYamlObject;
 import build.pluto.executor.loaddep.LoadDependency;
+import build.pluto.executor.loaddep.LoadDependencyFactory;
 import build.pluto.executor.loaddep.LoadDependencyRegistry;
 import build.pluto.output.Out;
 import build.pluto.output.Output;
@@ -39,6 +40,10 @@ public class Executor extends Builder<Executor.Input, Output> {
 		com.cedarsoftware.util.DeepEquals.class, // com.cedarsoftware:java-util
 		build.pluto.builder.BuildManager.class, // build.pluto:pluto
 		build.pluto.executor.Executor.class // build.pluto:executor
+	};
+	
+	public static final Class<?>[] LOAD_DEPENDENCIES = {
+		build.pluto.executor.loaddep.FileLoadDependency.Factory.class
 	};
 	
 	public static String javaVersion() {
@@ -98,17 +103,7 @@ public class Executor extends Builder<Executor.Input, Output> {
 				throw new IllegalStateException("Could not find ressource for class " + cl);
 		}
 		
-		if (config.getDependencies() != null)
-			for (Dependency dep : config.getDependencies()) {
-				LoadDependency loadDep = LoadDependencyRegistry.get(dep.kind, dep.input, workingDir);
-				List<File> files = loadDep.loadSimple();
-				if (files == null) {
-					Origin depOrigin = loadDep.loadComplex();
-					Collection<? extends Output> outputs = requireBuild(depOrigin);
-					files = loadDep.filesFromOutputs(outputs);
-				}
-				dependencies.addAll(files);
-			}
+		loadDependencies(config, workingDir, dependencies);
 
 		if (config.getBuilderSourceDirs() != null) {
 			List<File> sourceFiles = new ArrayList<>();
@@ -132,6 +127,31 @@ public class Executor extends Builder<Executor.Input, Output> {
 		Out<String> out = reflective.build(this, target.getName(), workingDir, dependencies, target.getBuilder(), SimpleYamlObject.of(target.getInput()));
 		
 		return out;
+	}
+
+	private void loadDependencies(Config config, File workingDir, List<File> dependencies) throws IOException {
+		LoadDependencyRegistry registry = new LoadDependencyRegistry();
+		
+		for (Class<?> cl : LOAD_DEPENDENCIES) {
+			try {
+				LoadDependencyFactory factory = (LoadDependencyFactory) cl.newInstance();
+				registry.registerFactory(factory);
+			} catch (InstantiationException | IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		
+		if (config.getDependencies() != null)
+			for (Dependency dep : config.getDependencies()) {
+				LoadDependency loadDep = registry.get(dep.kind, SimpleYamlObject.of(dep.input), workingDir);
+				List<File> files = loadDep.loadSimple();
+				if (files == null) {
+					Origin depOrigin = loadDep.loadComplex();
+					Collection<? extends Output> outputs = requireBuild(depOrigin);
+					files = loadDep.filesFromOutputs(outputs);
+				}
+				dependencies.addAll(files);
+			}
 	}
 
 	@Override
