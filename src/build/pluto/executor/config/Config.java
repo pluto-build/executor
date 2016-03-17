@@ -8,21 +8,21 @@ import java.util.Map;
 
 public class Config {
 	private Map<String, Target> targets;
-	private List<File> builderSource;
-	private File builderTarget;
+	private List<File> builderSourceDirs;
+	private File builderTargetDir;
 	private List<Dependency> dependencies;
 	
 	public void makePathsAbsolute(File parent) {
-		if (builderTarget != null && !builderTarget.isAbsolute())
-			builderTarget = new File(parent, builderTarget.getPath());
-		if (builderSource != null) {
-			List<File> newSource = new ArrayList<>(builderSource.size());
-			for (File src : builderSource)
+		if (builderTargetDir != null && !builderTargetDir.isAbsolute())
+			builderTargetDir = new File(parent, builderTargetDir.getPath());
+		if (builderSourceDirs != null) {
+			List<File> newSource = new ArrayList<>(builderSourceDirs.size());
+			for (File src : builderSourceDirs)
 				if (!src.isAbsolute())
 					newSource.add(new File(parent, src.getPath()));
 				else
 					newSource.add(src);
-			builderSource = newSource;
+			builderSourceDirs = newSource;
 		}
 	}
 	
@@ -47,20 +47,20 @@ public class Config {
 		return targets.get(buildTarget);
 	}
 
-	public List<File> getBuilderSource() {
-		return builderSource;
+	public List<File> getBuilderSourceDirs() {
+		return builderSourceDirs;
 	}
 
-	public void setBuilderSource(List<File> builderSource) {
-		this.builderSource = builderSource;
+	public void setBuilderSourceDirs(List<File> builderSource) {
+		this.builderSourceDirs = builderSource;
 	}
 
-	public File getBuilderTarget() {
-		return builderTarget;
+	public File getBuilderTargetDir() {
+		return builderTargetDir;
 	}
 
-	public void setBuilderTarget(File builderTarget) {
-		this.builderTarget = builderTarget;
+	public void setBuilderTargetDir(File builderTarget) {
+		this.builderTargetDir = builderTarget;
 	}
 
 	public List<Dependency> getDependencies() {

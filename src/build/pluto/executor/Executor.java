@@ -6,35 +6,39 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.sugarj.common.FileCommands;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
-import com.cedarsoftware.util.DeepEquals;
-
-import build.pluto.builder.BuildManager;
 import build.pluto.builder.Builder;
 import build.pluto.builder.BuilderFactory;
 import build.pluto.builder.BuilderFactoryFactory;
 import build.pluto.buildjava.JavaBulkCompiler;
 import build.pluto.buildjava.JavaCompilerInput;
+import build.pluto.dependency.Origin;
 import build.pluto.executor.config.Config;
+import build.pluto.executor.config.Dependency;
 import build.pluto.executor.config.Target;
 import build.pluto.executor.config.yaml.SimpleYamlObject;
+import build.pluto.executor.loaddep.LoadDependency;
+import build.pluto.executor.loaddep.LoadDependencyRegistry;
 import build.pluto.output.Out;
 import build.pluto.output.Output;
+
+import com.cedarsoftware.util.DeepEquals;
 
 public class Executor extends Builder<Executor.Input, Output> {
 
 	public static final String PLUTO_HOME = System.getenv("PLUTO_HOME") != null ? System.getenv("PLUTO_HOME") : System.getProperty("user.home") + "/.pluto";
 	
 	public static final Class<?>[] DEPENDENCIES = {
-		FileCommands.class, // org.sugarj:common
-		DeepEquals.class, // com.cedarsoftware:java-util
-		BuildManager.class, // build.pluto:pluto
-		Executor.class // build.pluto:executor
+		org.sugarj.common.FileCommands.class, // org.sugarj:common
+		com.cedarsoftware.util.DeepEquals.class, // com.cedarsoftware:java-util
+		build.pluto.builder.BuildManager.class, // build.pluto:pluto
+		build.pluto.executor.Executor.class // build.pluto:executor
 	};
 	
 	public static String javaVersion() {
@@ -90,18 +94,31 @@ public class Executor extends Builder<Executor.Input, Output> {
 			Path path = FileCommands.getRessourceContainer(cl);
 			if (path != null)
 				dependencies.add(path.toFile());
+			else
+				throw new IllegalStateException("Could not find ressource for class " + cl);
 		}
-		// TODO feed in dependencies form config
+		
+		if (config.getDependencies() != null)
+			for (Dependency dep : config.getDependencies()) {
+				LoadDependency loadDep = LoadDependencyRegistry.get(dep.kind, dep.input);
+				List<File> files = loadDep.loadSimple();
+				if (files == null) {
+					Origin depOrigin = loadDep.loadComplex();
+					Collection<? extends Output> outputs = requireBuild(depOrigin);
+					files = loadDep.filesFromOutputs(outputs);
+				}
+				dependencies.addAll(files);
+			}
 
-		if (config.getBuilderSource() != null) {
+		if (config.getBuilderSourceDirs() != null) {
 			List<File> sourceFiles = new ArrayList<>();
-			for (File sourceDir : config.getBuilderSource())
+			for (File sourceDir : config.getBuilderSourceDirs())
 				sourceFiles.addAll(FileCommands.listFilesRecursive(sourceDir));
 			
 			JavaCompilerInput javaInput = 
 					JavaCompilerInput.Builder()
-					.addSourcePaths(config.getBuilderSource())
-					.setTargetDir(config.getBuilderTarget())
+					.addSourcePaths(config.getBuilderSourceDirs())
+					.setTargetDir(config.getBuilderTargetDir())
 					.addClassPaths(dependencies)
 					.addInputFiles(sourceFiles)
 					.setTargetRelease(javaVersion())
@@ -110,7 +127,7 @@ public class Executor extends Builder<Executor.Input, Output> {
 			requireBuild(JavaBulkCompiler.factory, javaInput);
 		}
 		
-		dependencies.add(config.getBuilderTarget());
+		dependencies.add(config.getBuilderTargetDir());
 		ReflectiveBuilding reflective = new ReflectiveBuilding();
 		Out<String> out = reflective.build(this, target.getName(), workingDir, dependencies, target.getBuilder(), SimpleYamlObject.of(target.getInput()));
 		

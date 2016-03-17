@@ -1,4 +1,4 @@
-package build.pluto.executor.test.simple1;
+package build.pluto.executor.test.simple;
 
 import java.io.File;
 import java.util.Arrays;
