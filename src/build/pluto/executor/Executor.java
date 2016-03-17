@@ -100,7 +100,7 @@ public class Executor extends Builder<Executor.Input, Output> {
 		
 		if (config.getDependencies() != null)
 			for (Dependency dep : config.getDependencies()) {
-				LoadDependency loadDep = LoadDependencyRegistry.get(dep.kind, dep.input);
+				LoadDependency loadDep = LoadDependencyRegistry.get(dep.kind, dep.input, workingDir);
 				List<File> files = loadDep.loadSimple();
 				if (files == null) {
 					Origin depOrigin = loadDep.loadComplex();

@@ -1,5 +1,6 @@
 package build.pluto.executor.loaddep;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,7 +12,7 @@ public class LoadDependencyRegistry {
 		factories.put(factory.kind(), factory);
 	}
 	
-	public static LoadDependency get(String kind, Object input) {
+	public static LoadDependency get(String kind, Object input, File workingDir) {
 		LoadDependencyFactory factory;
 		synchronized (LoadDependencyRegistry.class) {
 			factory = factories.get(kind);
@@ -20,6 +21,6 @@ public class LoadDependencyRegistry {
 		if (factory == null)
 			throw new IllegalArgumentException("Dependency kind '" + kind + "' not supported");
 		
-		return factory.create(input);
+		return factory.create(workingDir, input);
 	}
 }
