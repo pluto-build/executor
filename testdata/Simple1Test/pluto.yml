@@ -13,7 +13,3 @@ targets:
     builder: simple1.Simple1
     input:
       file: read.txt
-
-dependencies:
-  - kind: file
-    input: /Users/seba/.m2/repository/org/sugarj/common/1.7.0-SNAPSHOT/common-1.7.0-SNAPSHOT.jar

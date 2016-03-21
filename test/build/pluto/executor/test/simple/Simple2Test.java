@@ -13,6 +13,7 @@ import build.pluto.executor.Executor;
 import build.pluto.executor.test.ScopedBuildTest;
 import build.pluto.output.Out;
 import build.pluto.output.Output;
+import build.pluto.test.build.EnsureNoBuilderStartedReporting;
 
 public class Simple2Test extends ScopedBuildTest {
 
@@ -43,4 +44,13 @@ public class Simple2Test extends ScopedBuildTest {
 		Assert.assertEquals("Please read this text.", o.val());
 	}
 
+	@Test
+	public void testRunTwice() throws Throwable {
+		File config = getRelativeFile("pluto.yml");
+		BuildManagers.build(new BuildRequest<>(Executor.factory, new Executor.Input(config, "print", null)));
+		BuildManagers.build(new BuildRequest<>(Executor.factory, new Executor.Input(config, "print", null)), new EnsureNoBuilderStartedReporting());
+		
+		BuildManagers.build(new BuildRequest<>(Executor.factory, new Executor.Input(config, "read", null)));
+		BuildManagers.build(new BuildRequest<>(Executor.factory, new Executor.Input(config, "read", null)), new EnsureNoBuilderStartedReporting());
+	}
 }
