@@ -25,7 +25,7 @@ public class Java1Test extends ScopedBuildTest {
 		File config = getRelativeFile("pluto.yml");
 		File binFile = getRelativeFile("bin/foo/Foo.class");
 		BuildManagers.build(new BuildRequest<>(Executor.factory, new Executor.Input(config, "build", null)));
-		Assert.assertTrue("Bin file was not generated", FileCommands.fileExists(binFile));
+		Assert.assertTrue("Bin file was not generated " + binFile, FileCommands.fileExists(binFile));
 	}
 	
 	@Test
@@ -33,7 +33,7 @@ public class Java1Test extends ScopedBuildTest {
 		File config = getRelativeFile("pluto.yml");
 		File binFile = getRelativeFile("bin/foo/Foo.class");
 		BuildManagers.build(new BuildRequest<>(Executor.factory, new Executor.Input(config, "build", null)));
-		Assert.assertTrue("Bin file was not generated", FileCommands.fileExists(binFile));
+		Assert.assertTrue("Bin file was not generated " + binFile, FileCommands.fileExists(binFile));
 		
 		long modified = binFile.lastModified();
 		BuildManagers.build(new BuildRequest<>(Executor.factory, new Executor.Input(config, "build", null)));
