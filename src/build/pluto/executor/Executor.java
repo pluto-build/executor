@@ -90,6 +90,8 @@ public class Executor extends Builder<Executor.Input, Output> {
 		File workingDir = input.plutoConfig.getParentFile();
 		config.makePathsAbsolute(workingDir);
 		Target target = config.getTarget(input.buildTarget);
+		if (target == null)
+			throw new IllegalArgumentException("Undefined target " + input.buildTarget);
 		
 		// TODO use extraInput to override config
 		
@@ -122,7 +124,9 @@ public class Executor extends Builder<Executor.Input, Output> {
 			requireBuild(JavaBulkCompiler.factory, javaInput);
 		}
 		
-		dependencies.add(config.getBuilderTargetDir());
+		if (config.getBuilderTargetDir() != null)
+			dependencies.add(config.getBuilderTargetDir());
+		
 		ReflectiveBuilding reflective = new ReflectiveBuilding();
 		Out<String> out = reflective.build(this, target.getName(), workingDir, dependencies, target.getBuilder(), SimpleYamlObject.of(target.getInput()));
 		

@@ -7,8 +7,8 @@ import java.util.Map;
 import org.sugarj.common.FileCommands;
 
 import build.pluto.builder.Builder;
-import build.pluto.executor.ExecutableBuilderFactory;
-import build.pluto.executor.ExecutableBuilderFactoryFactory;
+import build.pluto.builder.factory.BuilderFactory;
+import build.pluto.builder.factory.BuilderFactoryFactory;
 import build.pluto.executor.InputParser;
 import build.pluto.executor.config.yaml.YamlObject;
 import build.pluto.output.Out;
@@ -18,7 +18,7 @@ import simple.Foo;
 
 public class Simple2 extends Builder<Simple2.Input, Out<String>> {
 
-	public static ExecutableBuilderFactory<Input, Out<String>, Simple2> factory = ExecutableBuilderFactoryFactory.of(Simple2.class, Input.class, new Parser());
+	public static BuilderFactory<Input, Out<String>, Simple2> factory = BuilderFactoryFactory.of(Simple2.class, Input.class, new Parser());
 
 	public Simple2(Input input) {
 		super(input);

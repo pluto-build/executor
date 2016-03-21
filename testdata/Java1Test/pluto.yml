@@ -1,0 +1,8 @@
+targets:
+  - name: build
+    builder: build.pluto.buildjava.JavaBulkCompiler
+    input:
+      targetDir: bin
+      sourcePath: [src]
+      sourceRelease: 1.7
+      targetRelease: 1.7
