@@ -3,3 +3,4 @@ META-INF
 
 testdata/*/*/
 !testdata/*/builder
+!testdata/*/src
