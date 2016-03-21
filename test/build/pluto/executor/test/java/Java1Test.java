@@ -7,6 +7,7 @@ import java.util.Collection;
 import org.junit.Assert;
 import org.junit.Test;
 import org.sugarj.common.FileCommands;
+import org.sugarj.common.StringCommands;
 
 import build.pluto.builder.BuildManagers;
 import build.pluto.builder.BuildRequest;
@@ -25,6 +26,8 @@ public class Java1Test extends ScopedBuildTest {
 		File config = getRelativeFile("pluto.yml");
 		File binFile = getRelativeFile("bin/foo/Foo.class");
 		BuildManagers.build(new BuildRequest<>(Executor.factory, new Executor.Input(config, "build", null)));
+		System.out.println(StringCommands.printListSeparated(FileCommands.listFilesRecursive(getRelativeFile("")), "\n"));
+		System.out.println("Exists?\n" + binFile);
 		Assert.assertTrue("Bin file was not generated " + binFile, FileCommands.fileExists(binFile));
 	}
 	
