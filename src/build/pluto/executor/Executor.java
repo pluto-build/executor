@@ -153,17 +153,4 @@ public class Executor extends Builder<Executor.Input, Output> {
 				dependencies.addAll(files);
 			}
 	}
-
-	@Override
-    protected 
-  //@formatter:off
-    <In_ extends Serializable, 
-     Out_ extends Output, 
-     B_ extends Builder<In_, Out_>, 
-     F_ extends BuilderFactory<In_, Out_, B_>, 
-     SubIn_ extends In_>
-  //@formatter:on
-    Out_ requireBuild(F_ factory, SubIn_ input) throws IOException {
-      return super.requireBuild(factory, input);
-    }
 }
